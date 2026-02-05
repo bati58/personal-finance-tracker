@@ -90,19 +90,6 @@ cd frontend
 npm test
 ```
 
-## Docker (Production-style)
-1. Create `backend/.env` from the example and set your MongoDB Atlas URI + JWT secret.
-2. Build and run:
-```bash
-docker compose up --build
-```
-
-Services:
-- Backend: `http://localhost:8000`
-- Frontend: `http://localhost:5173`
-
-If you need a different API URL for the frontend build, change `VITE_API_URL` in `docker-compose.yml`.
-
 ## API Endpoints
 - `GET /health`
 - `POST /auth/register`
