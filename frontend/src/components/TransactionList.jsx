@@ -1,0 +1,89 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Typography,
+  Box,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
+} from '@mui/material';
+import API_BASE_URL from '../config';
+
+const TransactionList = ({ refreshKey }) => {
+  const [transactions, setTransactions] = useState([]);
+  const [filterType, setFilterType] = useState('all');
+
+  const fetchTransactions = async (type) => {
+    try {
+      const url =
+        type === 'all'
+          ? `${API_BASE_URL}/transactions`
+          : `${API_BASE_URL}/transactions?type=${type}`;
+
+      const response = await axios.get(url);
+      setTransactions(response.data);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions(filterType);
+  }, [filterType, refreshKey]);
+
+  const handleFilterChange = (e) => {
+    setFilterType(e.target.value);
+  };
+
+  return (
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h5" gutterBottom>
+        Transaction History
+      </Typography>
+
+      <FormControl sx={{ minWidth: 150, mb: 2 }}>
+        <InputLabel>Filter By Type</InputLabel>
+        <Select value={filterType} onChange={handleFilterChange} label="Filter By Type">
+          <MenuItem value="all">All</MenuItem>
+          <MenuItem value="credit">Credit (Income)</MenuItem>
+          <MenuItem value="debit">Debit (Expense)</MenuItem>
+        </Select>
+      </FormControl>
+
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Category</TableCell>
+              <TableCell align="right">Amount ($)</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {transactions.map((tx) => (
+              <TableRow key={tx.id}>
+                <TableCell>{new Date(tx.date).toLocaleDateString()}</TableCell>
+                <TableCell style={{ color: tx.type === 'credit' ? 'green' : 'red' }}>
+                  {tx.type.toUpperCase()}
+                </TableCell>
+                <TableCell>{tx.category}</TableCell>
+                <TableCell align="right">{Number(tx.amount).toFixed(2)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+};
+
+export default TransactionList;

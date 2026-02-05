@@ -1,180 +1,82 @@
 # Personal Finance Tracker
 
-A full-stack personal finance tracking application with React frontend and FastAPI backend.
+A full-stack personal finance tracking application using:
+- Backend: Node.js + Express + MongoDB Atlas
+- Frontend: React (Vite) + Material UI + Recharts
 
-## Features
-
+## What this project does
 - Add financial transactions (credit/debit)
 - View transaction history with filtering
 - Weekly financial reports with charts
-- Responsive Material-UI design
 
-## Setup Instructions
+The original FastAPI/CRA version is preserved in:
+- `backend_fastapi/`
+- `frontend_cra/`
 
-### Backend Setup
+## Backend setup (Node/Express)
 
-1. Navigate to the backend directory:
+1. Go to the backend folder:
 ```bash
 cd backend
 ```
 
-2. Activate virtual environment (if using):
+2. Create `.env` from the example and set your MongoDB Atlas URI:
 ```bash
-# Windows
-venv\Scripts\activate
+# Windows PowerShell
+Copy-Item .env.example .env
 
-# Linux/Mac
-source venv/bin/activate
+# macOS/Linux
+cp .env.example .env
 ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
+3. Edit `.env` and set:
+```
+MONGODB_URI=mongodb+srv://USER:PASS@CLUSTER/dbname?retryWrites=true&w=majority
+CORS_ORIGINS=http://localhost:5173
+PORT=8000
 ```
 
-4. Run the backend server:
-```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The backend will be available at:
-- `http://localhost:8000`
-- `http://0.0.0.0:8000` (accessible from network)
-- API docs: `http://localhost:8000/docs`
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-```bash
-cd frontend
-```
-
-2. Install dependencies:
+4. Install and run:
 ```bash
 npm install
+npm run dev
 ```
 
-3. Run the frontend:
-```bash
-npm start
-```
+Backend will run at `http://localhost:8000`
 
-The frontend will be available at `http://localhost:3000`
+## Frontend setup (Vite React)
 
-## Running on Local Network
-
-To access the app from other devices on your local network:
-
-### Step 1: Find Your Local IP Address
-
-**Windows:**
-```bash
-ipconfig
-```
-Look for "IPv4 Address" (e.g., `192.168.1.100`)
-
-**Linux/Mac:**
-```bash
-ifconfig
-# or
-ip addr show
-```
-
-### Step 2: Update Frontend Configuration
-
-Edit `frontend/src/config.ts`:
-
-```typescript
-// Option 1: Use environment variable
-// Create .env file in frontend/ with:
-// REACT_APP_API_URL=http://192.168.1.100:8000
-
-// Option 2: Hardcode in config.ts
-const API_BASE_URL = 'http://192.168.1.100:8000';  // Replace with your IP
-```
-
-### Step 3: Update Backend CORS
-
-Edit `backend/main.py` and add your local IP to the origins list:
-
-```python
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://192.168.1.100:3000",  # Replace with your IP
-]
-```
-
-### Step 4: Start Both Servers
-
-**Backend:**
-```bash
-cd backend
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-**Frontend:**
+1. Go to the frontend folder:
 ```bash
 cd frontend
-# Set environment variable (Windows PowerShell)
-$env:REACT_APP_API_URL="http://192.168.1.100:8000"
-npm start
-
-# Or use .env file (create frontend/.env):
-# REACT_APP_API_URL=http://192.168.1.100:8000
 ```
 
-### Step 5: Access from Other Devices
+2. Create `.env` (optional) to point to your API:
+```bash
+# Windows PowerShell
+Copy-Item .env.example .env
 
-On other devices on the same network, open:
-- `http://YOUR_IP:3000` (e.g., `http://192.168.1.100:3000`)
-
-## Environment Variables (Optional)
-
-Create a `.env` file in the `frontend` directory:
-
-```
-REACT_APP_API_URL=http://localhost:8000
+# macOS/Linux
+cp .env.example .env
 ```
 
-Or for network access:
-```
-REACT_APP_API_URL=http://192.168.137.142:8000
-```
-
-## Project Structure
-
-```
-personal-finance-app/
-├── backend/
-│   ├── main.py          # FastAPI application
-│   ├── models.py        # SQLAlchemy models
-│   ├── schemas.py       # Pydantic schemas
-│   ├── database.py     # Database configuration
-│   └── requirements.txt # Python dependencies
-├── frontend/
-│   ├── src/
-│   │   ├── components/  # React components
-│   │   ├── config.ts    # API configuration
-│   │   └── App.tsx      # Main app component
-│   └── package.json     # Node dependencies
-└── README.md
+3. Install and run:
+```bash
+npm install
+npm run dev
 ```
 
-## Troubleshooting
+Frontend will run at `http://localhost:5173`
 
-### Backend not accessible from network
-- Ensure backend is running with `--host 0.0.0.0`
-- Check Windows Firewall settings
-- Verify CORS origins include your network IP
+## API Endpoints
+- `GET /health`
+- `POST /transactions`
+- `GET /transactions` (filters: `type`, `start_date`, `end_date`, `category`, `q`, `limit`, `offset`)
+- `GET /transactions/:id`
+- `PUT /transactions/:id`
+- `DELETE /transactions/:id`
+- `GET /report/weekly`
 
-### Frontend can't connect to backend
-- Check that API_BASE_URL in `config.ts` matches backend address
-- Verify backend is running on the correct port
-- Check browser console for CORS errors
-
-### Port already in use
-- Change port in backend: `uvicorn main:app --port 8001`
-- Update `config.ts` with new port
-- Or kill the process using the port
-
+## Notes
+- Amounts are stored as integer cents for accuracy; the API accepts/returns dollars.
+- If you access the frontend from another device, add its URL to `CORS_ORIGINS`.
