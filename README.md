@@ -1,5 +1,8 @@
 # Personal Finance Tracker
 
+![FinanceTracker](screenshot.png)
+
+
 A full-stack personal finance tracking application using:
 - Backend: Node.js + Express + MongoDB Atlas
 - Frontend: React (Vite) + Material UI + Recharts
