@@ -1,5 +1,5 @@
 # Personal Finance Tracker
-
+![FinanceTracker](screenshot0.png)
 ![FinanceTracker](screenshot.png)
 
 
