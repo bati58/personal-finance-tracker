@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import {
   Box,
   TextField,
@@ -8,9 +7,11 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Typography
+  Typography,
+  Snackbar,
+  Alert
 } from '@mui/material';
-import API_BASE_URL from '../config';
+import api from '../api';
 
 const TransactionForm = ({ onTransactionAdded }) => {
   const [formData, setFormData] = useState({
@@ -30,8 +31,20 @@ const TransactionForm = ({ onTransactionAdded }) => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       const dateToSend = dateInput ? new Date(dateInput).toISOString() : new Date().toISOString();
 
@@ -41,8 +54,12 @@ const TransactionForm = ({ onTransactionAdded }) => {
         date: dateToSend
       };
 
-      await axios.post(`${API_BASE_URL}/transactions`, payload);
-      alert('Transaction added successfully!');
+      await api.post('/transactions', payload);
+      setSnackbar({
+        open: true,
+        message: 'Transaction added successfully.',
+        severity: 'success'
+      });
 
       const now = new Date();
       const year = now.getFullYear();
@@ -62,8 +79,20 @@ const TransactionForm = ({ onTransactionAdded }) => {
       onTransactionAdded();
     } catch (error) {
       console.error('Error adding transaction:', error);
-      const errorMsg = error.response?.data?.error || error.response?.data?.detail || error.message || 'Failed to add transaction.';
-      alert(`Failed to add transaction: ${errorMsg}`);
+      const apiError = error.response?.data?.error;
+      const errorMsg =
+        apiError?.message ||
+        apiError ||
+        error.response?.data?.detail ||
+        error.message ||
+        'Failed to add transaction.';
+      setSnackbar({
+        open: true,
+        message: `Failed to add transaction: ${errorMsg}`,
+        severity: 'error'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -103,7 +132,13 @@ const TransactionForm = ({ onTransactionAdded }) => {
 
       <FormControl fullWidth>
         <InputLabel>Type</InputLabel>
-        <Select name="type" value={formData.type} onChange={handleSelectChange} label="Type">
+        <Select
+          name="type"
+          value={formData.type}
+          onChange={handleSelectChange}
+          label="Type"
+          disabled={isSubmitting}
+        >
           <MenuItem value="credit">Credit (Income)</MenuItem>
           <MenuItem value="debit">Debit (Expense)</MenuItem>
         </Select>
@@ -117,6 +152,7 @@ const TransactionForm = ({ onTransactionAdded }) => {
         onChange={handleChange}
         required
         inputProps={{ step: '0.01' }}
+        disabled={isSubmitting}
       />
 
       <TextField
@@ -126,6 +162,7 @@ const TransactionForm = ({ onTransactionAdded }) => {
         value={formData.category}
         onChange={handleChange}
         required
+        disabled={isSubmitting}
       />
 
       <TextField
@@ -136,11 +173,23 @@ const TransactionForm = ({ onTransactionAdded }) => {
         onChange={handleChange}
         InputLabelProps={{ shrink: true }}
         required
+        disabled={isSubmitting}
       />
 
-      <Button type="submit" variant="contained" color="primary">
-        Save Transaction
+      <Button type="submit" variant="contained" color="primary" disabled={isSubmitting}>
+        {isSubmitting ? 'Saving...' : 'Save Transaction'}
       </Button>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

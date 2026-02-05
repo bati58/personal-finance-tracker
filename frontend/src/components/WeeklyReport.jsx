@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Typography, Box, Paper } from '@mui/material';
+import { Typography, Box, Paper, Alert, CircularProgress } from '@mui/material';
 import {
   BarChart,
   Bar,
@@ -11,17 +10,24 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import API_BASE_URL from '../config';
+import api from '../api';
 
 const WeeklyReport = ({ refreshKey }) => {
   const [reportData, setReportData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const fetchReport = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/report/weekly`);
+      setIsLoading(true);
+      setError('');
+      const response = await api.get('/report/weekly');
       setReportData(response.data);
     } catch (error) {
       console.error('Error fetching weekly report:', error);
+      setError('Failed to load weekly report. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -40,6 +46,19 @@ const WeeklyReport = ({ refreshKey }) => {
       <Typography variant="h5" gutterBottom>
         Weekly Financial Report
       </Typography>
+
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      ) : null}
+
+      {isLoading && reportData.length === 0 ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
+          <CircularProgress size={20} />
+          <Typography variant="body2">Loading report...</Typography>
+        </Box>
+      ) : null}
 
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 4 }}>
         <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 33.333%' } }}>

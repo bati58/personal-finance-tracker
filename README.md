@@ -12,9 +12,13 @@ A full-stack personal finance tracking application using:
 - View transaction history with filtering
 - Weekly financial reports with charts
 
-The original FastAPI/CRA version is preserved in:
-- `backend_fastapi/`
-- `frontend_cra/`
+## Authentication
+This version requires login. The frontend provides a simple login/register screen.
+
+You can also use the API directly:
+- `POST /auth/register` `{ name, email, password }`
+- `POST /auth/login` `{ email, password }`
+- `GET /auth/me` (requires `Authorization: Bearer <token>`)
 
 ## Backend setup (Node/Express)
 
@@ -37,6 +41,8 @@ cp .env.example .env
 MONGODB_URI=mongodb+srv://USER:PASS@CLUSTER/dbname?retryWrites=true&w=majority
 CORS_ORIGINS=http://localhost:5173
 PORT=8000
+JWT_SECRET=replace-with-a-long-random-string
+JWT_EXPIRES_IN=7d
 ```
 
 4. Install and run:
@@ -71,8 +77,24 @@ npm run dev
 
 Frontend will run at `http://localhost:5173`
 
+## Testing
+Backend tests:
+```bash
+cd backend
+npm test
+```
+
+Frontend tests:
+```bash
+cd frontend
+npm test
+```
+
 ## API Endpoints
 - `GET /health`
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
 - `POST /transactions`
 - `GET /transactions` (filters: `type`, `start_date`, `end_date`, `category`, `q`, `limit`, `offset`)
 - `GET /transactions/:id`

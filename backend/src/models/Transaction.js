@@ -3,6 +3,12 @@ const { centsToDollars } = require('../utils/money');
 
 const transactionSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true
+    },
     type: {
       type: String,
       enum: ['credit', 'debit'],

@@ -13,6 +13,7 @@ router.get('/weekly', async (req, res, next) => {
     startDate.setUTCDate(startDate.getUTCDate() - 7 * 7); // last 8 weeks incl. current
 
     const transactions = await Transaction.find({
+      userId: req.user.id,
       date: { $gte: startDate }
     });
 
