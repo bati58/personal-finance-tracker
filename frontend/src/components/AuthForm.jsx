@@ -12,10 +12,98 @@ import {
 } from '@mui/material';
 import api, { setAuthToken } from '../api';
 
+const validationModel = {
+  login: {
+    email: { label: 'Email', required: true, email: true },
+    password: { label: 'Password', required: true, min: 8, max: 128 }
+  },
+  register: {
+    name: {
+      label: 'Name',
+      required: true,
+      min: 2,
+      max: 64,
+      pattern: /^[A-Za-z]+(?: [A-Za-z]+)*$/,
+      patternMessage: 'Name must contain only letters and spaces.'
+    },
+    email: { label: 'Email', required: true, email: true },
+    password: { label: 'Password', required: true, min: 8, max: 128 }
+  }
+};
+
+const createErrorModel = () => ({
+  name: '',
+  email: '',
+  password: '',
+  form: ''
+});
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const normalizeValue = (field, value) => (field === 'password' ? value : value.trim());
+
+const validateField = (mode, field, value) => {
+  const rules = validationModel[mode]?.[field];
+  if (!rules) return '';
+
+  const normalized = normalizeValue(field, value || '');
+  if (rules.required && normalized.length === 0) {
+    return `${rules.label} is required.`;
+  }
+
+  if (rules.min && normalized.length < rules.min) {
+    return `${rules.label} must be at least ${rules.min} characters.`;
+  }
+
+  if (rules.max && normalized.length > rules.max) {
+    return `${rules.label} must be at most ${rules.max} characters.`;
+  }
+
+  if (rules.email && !emailPattern.test(normalized)) {
+    return 'Please enter a valid email address.';
+  }
+
+  if (rules.pattern && !rules.pattern.test(normalized)) {
+    return rules.patternMessage || `${rules.label} is invalid.`;
+  }
+
+  return '';
+};
+
+const validateForm = (mode, values) => {
+  const errors = createErrorModel();
+  Object.keys(validationModel[mode]).forEach((field) => {
+    errors[field] = validateField(mode, field, values[field]);
+  });
+  return errors;
+};
+
+const extractServerErrors = (error) => {
+  const apiError = error?.response?.data?.error;
+  const details = apiError?.details;
+  const fieldErrors = details?.fieldErrors;
+
+  if (!fieldErrors || typeof fieldErrors !== 'object') {
+    return null;
+  }
+
+  const mapped = createErrorModel();
+  Object.entries(fieldErrors).forEach(([field, messages]) => {
+    if (Array.isArray(messages) && messages.length > 0) {
+      mapped[field] = messages[0];
+    }
+  });
+  mapped.form = apiError?.message || '';
+  return mapped;
+};
+
 const AuthForm = ({ onAuthSuccess }) => {
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState(createErrorModel());
+  const [touched, setTouched] = useState({ name: false, email: false, password: false });
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -23,12 +111,26 @@ const AuthForm = ({ onAuthSuccess }) => {
   });
 
   const handleModeChange = (_, value) => {
-    if (value) setMode(value);
+    if (value) {
+      setMode(value);
+      setErrors(createErrorModel());
+      setTouched({ name: false, email: false, password: false });
+      setHasSubmitted(false);
+    }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (touched[name] || hasSubmitted) {
+      setErrors((prev) => ({ ...prev, [name]: validateField(mode, name, value), form: '' }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    setErrors((prev) => ({ ...prev, [name]: validateField(mode, name, value), form: '' }));
   };
 
   const handleClose = () => {
@@ -48,7 +150,16 @@ const AuthForm = ({ onAuthSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setHasSubmitted(true);
+    const validationErrors = validateForm(mode, form);
+    const hasErrors = Object.keys(validationModel[mode]).some((field) => validationErrors[field]);
+    if (hasErrors) {
+      setErrors((prev) => ({ ...prev, ...validationErrors, form: '' }));
+      return;
+    }
+
     setIsSubmitting(true);
+    setErrors((prev) => ({ ...prev, form: '' }));
     try {
       const payload =
         mode === 'register'
@@ -63,6 +174,11 @@ const AuthForm = ({ onAuthSuccess }) => {
       setAuthToken(token);
       onAuthSuccess(user);
     } catch (error) {
+      const serverErrors = extractServerErrors(error);
+      if (serverErrors) {
+        setErrors((prev) => ({ ...prev, ...serverErrors }));
+      }
+
       setSnackbar({
         open: true,
         message: getErrorMessage(error, 'Authentication failed.'),
@@ -98,8 +214,11 @@ const AuthForm = ({ onAuthSuccess }) => {
               name="name"
               value={form.name}
               onChange={handleChange}
+              onBlur={handleBlur}
               required
               disabled={isSubmitting}
+              error={Boolean(errors.name)}
+              helperText={errors.name}
             />
           ) : null}
 
@@ -109,8 +228,11 @@ const AuthForm = ({ onAuthSuccess }) => {
             type="email"
             value={form.email}
             onChange={handleChange}
+            onBlur={handleBlur}
             required
             disabled={isSubmitting}
+            error={Boolean(errors.email)}
+            helperText={errors.email}
           />
 
           <TextField
@@ -119,8 +241,11 @@ const AuthForm = ({ onAuthSuccess }) => {
             type="password"
             value={form.password}
             onChange={handleChange}
+            onBlur={handleBlur}
             required
             disabled={isSubmitting}
+            error={Boolean(errors.password)}
+            helperText={errors.password}
           />
 
           <Button type="submit" variant="contained" disabled={isSubmitting}>
