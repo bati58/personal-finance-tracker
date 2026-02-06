@@ -2,6 +2,8 @@
 ![FinanceTracker](screenshot0.png)
 ![FinanceTracker](screenshot.png)
 
+view live demo: [personal finance tracker](https://personal-finance-tracker-virid-nine.vercel.app/)
+
 
 A full-stack personal finance tracking application using:
 - Backend: Node.js + Express + MongoDB Atlas
